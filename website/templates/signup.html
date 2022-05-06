@@ -2,7 +2,8 @@
 {% block title %}Sign Up{% endblock %}
 {% block content %}
 <form method="POST">
-    <h3 align="center">
+    <!-- quando premo il btn alla fine invia i dati nelle caselle a una richiesta post in /sign-up  -->
+    <h3 align="center" style="margin-top:3%">
         Sign Up
     </h3>
     <div class="form-group">
@@ -13,7 +14,6 @@
                class="form-control"
                placeholder="Enter Email"
         />
-        <div class="form-group">
         <label for="email">Username</label>
         <input type="text"
                id="username"
@@ -28,7 +28,7 @@
                class="form-control"
                placeholder="Enter Password"
         />
-            <label for="password2">Password Again</label>
+        <label for="password2">Password Again</label>
         <input type="password"
                id="password2"
                name="password2"
