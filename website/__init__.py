@@ -1,17 +1,19 @@
-from flask import Flask
+from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from os import path
 from flask_login import LoginManager
 
 db = SQLAlchemy()
-DB_NAME = "database.db"
 
 
 def create_app():
     app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:password@localhost/basi22'
+    # jdbc:postgresql://localhost:5432/postgres    postgresql://postgres:password@localhost/basi22
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config['SECRET_KEY'] = "helloworld"
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
-    db.init_app(app)
+    app.secret_key = 'helloworld'
+    db = SQLAlchemy(app)
 
     from .views import views
     from .auth import auth
@@ -19,7 +21,7 @@ def create_app():
     app.register_blueprint(views, url_prefix="/")
     app.register_blueprint(auth, url_prefix="/")
 
-    from .models import User, Post
+    from .models import Utenti
 
     create_database(app)
 
@@ -29,12 +31,13 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(id):
-        return User.query.get(int(id))
+        # todo : cambiare in utenti per fare accesso senza chiamare studenti e docenti
+
+        return Utenti.query.get(int(id))
 
     return app
 
 
 def create_database(app):
-    if not path.exists("website/" + DB_NAME):
-        db.create_all(app=app)
-        print("Created database!")
+    db.create_all(app=app)
+    print("Created database!")

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from . import db
-from .models import User
+from .models import Utenti, Studenti, Professori
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -12,17 +12,26 @@ def login():
     if request.method == 'POST':
         email = request.form.get("email")
         password = request.form.get("password")
-
-        user = User.query.filter_by(email=email).first()
-        if user:
-            if check_password_hash(user.password, password):
+        utente = Utenti.query.filter_by(email=email).first()
+        if utente:  # se esiste in db
+            if check_password_hash(utente.password, password):  # se pwd coincide
                 flash("Logged in!", category='success')
-                login_user(user, remember=True)
-                return redirect(url_for('views.home'))
+                doc = Professori.query.filter_by(email=email).first()  # controllo se prof
+                if doc:  # se professore
+                    if doc.is_admin:  # ramo amministratore todo:da fare
+                        # reindirizzo a schermata admin
+                        login_user(utente, remember=True)
+                        return redirect(url_for('views.home'))
+                    else:  # ramo professore todo: da fare
+                        login_user(utente, remember=True)
+                        return redirect(url_for('views.home'))
+                else:  # ramo studente todo: da fare
+                    login_user(utente, remember=True)
+                    return redirect(url_for('views.home'))
             else:
-                flash('Password is incorrect.', category='error')
+                flash('Combinazione email passowrd errata', category='error')
         else:
-            flash('Email does not exist.', category='error')
+            flash('Combinazione email passowrd errata', category='error')
 
     return render_template("login.html", user=current_user)
 
@@ -30,30 +39,31 @@ def login():
 @auth.route("/sign-up", methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'POST':
+        nome = request.form.get("nome")
+        cognome = request.form.get("cognome")
         email = request.form.get("email")
-        username = request.form.get("username")
+        password = request.form.get("password")
         password1 = request.form.get("password1")
-        password2 = request.form.get("password2")
-
-        email_exists = User.query.filter_by(email=email).first()
-        username_exists = User.query.filter_by(username=username).first()
+        data_nascita = request.form.get("data_nascita")
+        salt = 1  # todo: pensare a come creare il salt
+        scuola = request.form.get("scuola")
+        email_exists = Utenti.query.filter_by(email=email).first()
 
         if email_exists:
-            flash('Email is already in use.', category='error')
-        elif username_exists:
-            flash('Username is already in use.', category='error')
-        elif password1 != password2:
-            flash('Password don\'t match!', category='error')
-        elif len(username) < 2:
-            flash('Username is too short.', category='error')
-        elif len(password1) < 6:
-            flash('Password is too short.', category='error')
+            flash('Email già in uso.', category='error')
+        elif password != password1:
+            flash('Password non combaciano', category='error')
+        elif len(password) < 1:
+            flash('Password troppo corta.', category='error')
         elif len(email) < 4:
-            flash("Email is invalid.", category='error')
+            flash("Email non valida.", category='error')
         else:
-            new_user = User(email=email, username=username, password=generate_password_hash(
-                password1, method='sha256'))
+
+            new_user = Utenti(nome=nome, cognome=cognome, email=email, password=generate_password_hash(
+                password, method='sha256'), data_nascita=data_nascita, salt=salt)
+            new_studente = Studenti(id=new_user.id, scuola=scuola)
             db.session.add(new_user)
+            db.session.add(new_studente)
             db.session.commit()
             login_user(new_user, remember=True)
             flash('User created!')
